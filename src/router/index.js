@@ -4,11 +4,19 @@ import VueRouter from 'vue-router'
 //1.安装插件
 Vue.use(VueRouter)
 
+// //获取原型对象上的push函数
+// const originalPush = Router.prototype.push
+// //修改原型对象中的push方法
+// Router.prototype.push = function push(location) {
+//    return originalPush.call(this, location).catch(err => err)
+// }
+
 //导入路由组件：不是直接导入，动态导入，懒加载
 const Home = () => import('../views/home/Home')
 const Category = () => import('../views/category/Category')
 const Cart = () => import('../views/cart/Cart')
 const Profile = () => import('../views/profile/Profile')
+const Detail = () => import('../views/detail/Detail')
 
 //2.创建router
 const routes = [
@@ -31,6 +39,10 @@ const routes = [
   {
     path: '/profile',
     component: Profile
+  },
+  {
+    path: '/detail/:iid',
+    component: Detail
   }
 ]
 

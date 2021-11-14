@@ -1,6 +1,9 @@
 <template>
   <div id="app">
-    <router-view/>
+    <!-- 我们想让详情页不缓存下来，每次路由到都创建一个新的详情页 -->
+    <keep-alive exclude="Detail">
+      <router-view/>
+    </keep-alive>
     <main-tab-bar/>
   </div>
 </template>

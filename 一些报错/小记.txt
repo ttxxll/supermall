@@ -1,0 +1,86 @@
+1.Better-Scroll在决定有多少区域可以滚动时，是根据scrollHeight属性决定的。
+  scrollHeight属性是根据Better-Scroll中的content的子组件高度计算出来的。
+  但是在我们的首页中，刚开始计算scrollHeight属性时，图片还没有加载完全，所以没有算到图片的高度，计算出来的scrollHeight很小。
+  后来图片加载进来之后有了新的高度，但是scrollHeight没有及时更新，导致滚动出现了问题。
+  
+  怎么解决：
+    监听每一张图片是否加载完成，只要有一个图片加载完成，就执行一次refresh，刷新scrollHeight。
+
+  如何监听图片加载完成：因为涉及到非父子组件间的通信，所以这里我们选择了事件总线。
+    1.1.GoodsItem组件
+      原生的js监听图片加载：img.onload = function() {}
+      Vue中的监听：@load='imageLoad'
+      在imageLoad()方法中通过事件总线将事件发出去：this.$bus.$emit('itemImageLoaded')
+    1.2.main.js：new Vue()实例作为事件总线 
+      //new Vue()实例作为事件总线 
+      Vue.prototype.$bus = new Vue()
+    1.3.Home组件：一初始化就监听
+        created() {
+          //3.监听gooditem中图片加载完成：默认是没有$bus，需要我们在原型中加一个
+          this.$bus.$on('itemImageLoaded', () => {
+            this.$refs.scroll.refresh()
+          })
+        },、
+
+2.因为异步延迟创建BScroll导致的：
+  TypeError: Cannot read properties of null (reading 'finishPullUp')
+             Cannot read properties of null (reading 'refresh')
+
+  BScroll实例为了等待组件、包括组件内的图片数据都加载完，然后算出scrollHeight滚动面积，所以让其等待1s后再创建：
+    setTimeout(() => {
+      this.scroll = new BScroll(this.$refs.wrapper, {
+        click: true,
+        probeType: this.probeType,
+        pullUpLoad: this.pullUpLoad
+      })
+
+      //2.监听滚动的位置
+      this.scroll.on('scroll', (position) => {
+        // 因为每个组件有自己的监听逻辑，到底要干嘛：所以在子组件中将事件发出去，让父组件自己处理
+        this.$emit('scroll', position);
+      })
+
+      //3.监听上拉加载事件
+      this.scroll.on('pullingUp', () => {
+        // 因为每个组件有自己的监听逻辑，到底要干嘛：所以在子组件中将事件发出去，让父组件自己处理
+        this.$emit('pullingUp')
+      })
+    }, 1000)
+  但是在Home会在BScroll还没有初始化好就调用BScroll里面的方法：refresh/refresh。
+        //3.监听gooditem中图片加载完成：默认是没有$bus，需要我们在原型中加一个
+        this.$bus.$on('itemImageLoaded', () => {
+          this.$refs.scroll.refresh()
+        })
+
+        this.$refs.scroll.refresh();
+  因为此时BScroll还没有创建好，显然会报错
+    Cannot read properties of null (reading 'finishPullUp')
+    Cannot read properties of null (reading 'refresh')
+  
+  在用refresh时，要保证mount中初始化的scroll能够先实例化出来
+
+
+3.因为一开始时，每个图片加载出来都会发送一次事件，监听到该事件又会调用一次refresh方法。
+  针对这种调用refresh频繁的情况，进行防抖操作。
+  类似搜索框。
+  防抖debounce/节流throttle
+
+4.事件循环:
+  console.log('aaa');
+
+  setTimeout(() => {
+    console.log('bbb');
+  })
+
+  console.log('ccc');
+
+  
+  打印顺序：aaa -> ccc -> bbb
+  setTimeout里面的内容会放到下一次事件循环尾部执行，即时没有给延迟时间。
+  会先将主干部分都执行完，再执行setIimeout里面的内容。
+
+
+5.Better-Scroll总是出错：滑不动，卡住了等等
+  思路：
+    我明明做了刷新refresh()操作，为啥还是卡住了。
+    会不会是我监听的方法名和子组件中发出的方法名不一样？===>果然是。
