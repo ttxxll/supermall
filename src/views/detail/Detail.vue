@@ -2,7 +2,6 @@
   <div id="detail">
       <detail-nav-bar class="detail-nav" @titleClick="titleClick" ref="nav"></detail-nav-bar>
       <scroll class="content" ref="scroll" @scroll="contentScroll" :probe-type="3">
-        <div>{{$store.state.cartList.length}}</div>
         <detail-swiper :top-images="topImages" @swiperdetailImageLoad="swiperdetailImageLoad"></detail-swiper>
         <detail-base-info :goods="goods"></detail-base-info>
         <detail-shop-info :shop="shop"></detail-shop-info>
@@ -13,6 +12,7 @@
       </scroll>
       <detail-bottom-bar @addCart="addToCart"></detail-bottom-bar>
       <back-top @click.native="backClick" v-show="isShowBackTop"/>   
+      <!-- <toast :message="message" :show="show"/> -->
   </div>
 </template>
 
@@ -33,6 +33,9 @@
   import {getDetail, Goods, Shop, GoodsParam, getRecommend} from "network/detail"
   import {debounce} from "common/utils"
   import {itemListnerMixin, backTopMixin} from "common/mixin"
+  import { mapActions } from 'vuex'
+
+  // import Toast from 'components/common/toast/Toast'
 
   export default {
     name: 'Detail',
@@ -48,7 +51,9 @@
         recommend: [],
         themeTopYs: [],
         getThemeTopY: null,
-        currentIndex: 0
+        currentIndex: 0,
+        // message: '',
+        // show: false
       }
     },
     mixins: [itemListnerMixin, backTopMixin],
@@ -112,7 +117,6 @@
         this.themeTopYs.push(this.$refs.params.$el.offsetTop)
         this.themeTopYs.push(this.$refs.comment.$el.offsetTop)
         this.themeTopYs.push(this.$refs.recommend.$el.offsetTop)
-        console.log(this.themeTopYs);
       }, 100)
     },
     components: {
@@ -125,9 +129,11 @@
       DetailCommentInfo,
       DetailBottomBar,
       Scroll,
-      GoodsList
+      GoodsList,
+      // Toast
     },
     methods: {
+      ...mapActions(['addCart']),
       // 1.它的防抖是在DetailSwiper发出事件时就控制了：只发出一次事件
       swiperdetailImageLoad() {
         console.log('refresh');
@@ -194,7 +200,21 @@
   
         //2.将商品添加到购物车
         //this.$store.commit('addcart', product)
-        this.$store.dispatch('addCart', product)
+        // this.$store.dispatch.addCart('addCart', product).then(res => {
+        //   console.log(res)
+        // })
+        //运用mapActions将actions中的方法映射到当前组件的methods中
+        this.addCart(product).then(res => {
+          // this.show = true;
+          // this.message = res;
+
+          // setTimeout(() => {
+          //   this.show = false;
+          //   this.message = '';
+          // }, 1000)
+          console.log(this.$toast);
+          this.$toast.show(res, 1500)
+        })
       }
     },
     //因为Detail和Home组件中的这部分代码一样，所以为了抽取这部分，用mixin将其封装。
@@ -249,7 +269,7 @@
 
   #detail {
     position: relative;
-    z-index: 9;
+    z-index: 1;
     background-color: #fff;
     /* 100%的视图高度 */
     height: 100vh;

@@ -7,19 +7,22 @@
     <!-- 商品列表 -->
     <cart-list></cart-list>
     <!-- 底部汇总 -->
+    <cart-bottom-bar class="cart-bottom-bar"/>
   </div>
 </template>
 
 <script>
   import NavBar from 'components/common/navbar/NavBar'
   import CartList from './childComponents/CartList.vue'
+  import CartBottomBar from './childComponents/CartBottomBar.vue'
   import {mapGetters} from 'vuex'
 
   export default {
     name: 'Cart',
     components: {
       NavBar,
-      CartList
+      CartList,
+      CartBottomBar
     },
     computed: {
       //...mapGetters(['cartLength', 'cartList'])
@@ -40,4 +43,13 @@
     background-color: var(--color-tint);
     color: #fff;
   }
+
+  /* .cart-bottom-bar {
+    position: fixed;
+    width: 100%;
+    bottom: 49px;
+    background-color: red;
+    height: 40px;
+    z-index: 9;
+  } */
 </style>
